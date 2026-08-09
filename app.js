@@ -4,17 +4,55 @@ const employees = [
   {id:'EMP-002',qrCode:'QR-EMP-002',name:'Maria Santos',role:'Barista',rate:85,status:'Active',hired:'Jul 12, 2026'},
   {id:'EMP-003',qrCode:'QR-EMP-003',name:'Carlo Reyes',role:'Cashier',rate:82,status:'Active',hired:'Jul 14, 2026'},
   {id:'EMP-004',qrCode:'QR-EMP-004',name:'Anne Garcia',role:'Service Staff',rate:78,status:'Active',hired:'Jul 17, 2026'},
-  {id:'EMP-005',qrCode:'QR-EMP-005',name:'Leo Cruz',role:'Manager',rate:110,status:'Inactive',hired:'Jun 01, 2026'}
+  {id:'EMP-005',qrCode:'QR-EMP-005',name:'Leo Cruz',role:'Manager',rate:110,status:'Active',hired:'Jun 01, 2026'},
+  {id:'EMP-006',qrCode:'QR-EMP-006',name:'Nina Velasco',role:'Cashier',rate:77,status:'Active',hired:'Jul 05, 2026'},
+  {id:'EMP-007',qrCode:'QR-EMP-007',name:'Tomas Lopez',role:'Barista',rate:83,status:'Active',hired:'Jul 08, 2026'},
+  {id:'EMP-008',qrCode:'QR-EMP-008',name:'Ivy Mendoza',role:'Service Staff',rate:76,status:'Active',hired:'Jul 09, 2026'},
+  {id:'EMP-009',qrCode:'QR-EMP-009',name:'Paulo Ramirez',role:'Kitchen Staff',rate:79,status:'Active',hired:'Jul 11, 2026'},
+  {id:'EMP-010',qrCode:'QR-EMP-010',name:'Carla De Vera',role:'Host',rate:74,status:'Active',hired:'Jul 13, 2026'},
+  {id:'EMP-011',qrCode:'QR-EMP-011',name:'Miguel Santos',role:'Kitchen Staff',rate:81,status:'Active',hired:'Jul 15, 2026'},
+  {id:'EMP-012',qrCode:'QR-EMP-012',name:'Aria Tan',role:'Service Staff',rate:75,status:'Active',hired:'Jul 16, 2026'},
+  {id:'EMP-013',qrCode:'QR-EMP-013',name:'Bea Lim',role:'Barista',rate:86,status:'Active',hired:'Jul 18, 2026'},
+  {id:'EMP-014',qrCode:'QR-EMP-014',name:'Kian Ong',role:'Cashier',rate:80,status:'Active',hired:'Jul 19, 2026'},
+  {id:'EMP-015',qrCode:'QR-EMP-015',name:'Rosa Yamada',role:'Service Staff',rate:77,status:'Active',hired:'Jul 20, 2026'}
+];
+const currentPayrollPeriod = 'Jul 16 - 31';
+const attendanceDate = '2026-07-27';
+const attendanceRecords = [
+  {employeeId:'EMP-001',date:'2026-07-27',status:'present',timeIn:'7:56 AM'},
+  {employeeId:'EMP-002',date:'2026-07-27',status:'present',timeIn:'7:58 AM'},
+  {employeeId:'EMP-003',date:'2026-07-27',status:'present',timeIn:'8:03 AM'},
+  {employeeId:'EMP-004',date:'2026-07-27',status:'present',timeIn:'7:52 AM'},
+  {employeeId:'EMP-005',date:'2026-07-27',status:'present',timeIn:'7:50 AM'},
+  {employeeId:'EMP-006',date:'2026-07-27',status:'present',timeIn:'7:59 AM'},
+  {employeeId:'EMP-007',date:'2026-07-27',status:'present',timeIn:'8:02 AM'},
+  {employeeId:'EMP-008',date:'2026-07-27',status:'present',timeIn:'7:57 AM'},
+  {employeeId:'EMP-009',date:'2026-07-27',status:'present',timeIn:'7:53 AM'},
+  {employeeId:'EMP-010',date:'2026-07-27',status:'present',timeIn:'7:55 AM'},
+  {employeeId:'EMP-011',date:'2026-07-27',status:'present',timeIn:'7:48 AM'},
+  {employeeId:'EMP-012',date:'2026-07-27',status:'present',timeIn:'8:01 AM'},
+  {employeeId:'EMP-013',date:'2026-07-27',status:'late',timeIn:'8:17 AM'},
+  {employeeId:'EMP-014',date:'2026-07-27',status:'late',timeIn:'8:24 AM'},
+  {employeeId:'EMP-015',date:'2026-07-27',status:'absent'}
+];
+const payrollRecords = [
+  {employeeId:'EMP-001',period:currentPayrollPeriod,netPay:3920,paid:true},
+  {employeeId:'EMP-002',period:currentPayrollPeriod,netPay:3870,paid:true},
+  {employeeId:'EMP-003',period:currentPayrollPeriod,netPay:4020,paid:true},
+  {employeeId:'EMP-004',period:currentPayrollPeriod,netPay:3760,paid:true},
+  {employeeId:'EMP-005',period:currentPayrollPeriod,netPay:4160,paid:true},
+  {employeeId:'EMP-006',period:currentPayrollPeriod,netPay:3820,paid:true},
+  {employeeId:'EMP-007',period:currentPayrollPeriod,netPay:3980,paid:true},
+  {employeeId:'EMP-008',period:currentPayrollPeriod,netPay:3910,paid:true},
+  {employeeId:'EMP-009',period:currentPayrollPeriod,netPay:3880,paid:true},
+  {employeeId:'EMP-010',period:currentPayrollPeriod,netPay:3790,paid:true},
+  {employeeId:'EMP-011',period:currentPayrollPeriod,netPay:4050,paid:true},
+  {employeeId:'EMP-012',period:currentPayrollPeriod,netPay:3960,paid:true},
+  {employeeId:'EMP-013',period:currentPayrollPeriod,netPay:3840,paid:false},
+  {employeeId:'EMP-014',period:currentPayrollPeriod,netPay:3820,paid:false},
+  {employeeId:'EMP-015',period:currentPayrollPeriod,netPay:3860,paid:false}
 ];
 let active='welcome', selected=null, cameraStream=null, activeAttendanceEmployee=null;
-// Attendance records and payroll records (dynamic data models)
-const attendanceRecords = [];
-const payrollRecords = [
-  {employeeId:'EMP-001',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:5200.00,paid:true},
-  {employeeId:'EMP-002',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:4120.50,paid:true},
-  {employeeId:'EMP-003',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:3780.75,paid:false},
-  {employeeId:'EMP-004',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:4100.00,paid:false}
-];
 function toggleSidebar(){
   const open = document.body.classList.toggle('sidebar-open');
   const btn = document.querySelector('.hamburger');
@@ -35,7 +73,9 @@ function go(page){
 }
 function layout(content,title){return `<div class="shell"><aside class="sidebar"><div class="brand"><i class="brand-mark">☕</i><span>InfusoPay</span></div><div class="nav-label">Workspace</div>${nav.map(n=>`<button class="nav-item ${active===n[0]?'active':''}" title="${n[2]}" aria-label="${n[2]}" onclick="go('${n[0]}')"><span>${n[1]}</span><span>${n[2]}</span></button>`).join('')}<div class="nav-label">Account</div><button class="nav-item" title="Logout" aria-label="Logout" onclick="showLogout()"><span>⇥</span><span>Logout</span></button></aside><div class="sidebar-overlay" onclick="toggleSidebar()"></div><section class="content"><header class="topbar"><button class="hamburger" aria-label="Toggle navigation" aria-expanded="false" onclick="toggleSidebar()">☰</button><div><b>${title}</b><div class="crumb">InfusoPay / ${title}</div></div><div class="top-actions"><span class="date">July 27, 2026 · 10:30 AM</span><button class="icon-btn" onclick="toast('You have 3 new notifications')">♧</button><div class="avatar">HD</div></div></header>${content}</section></div>`}
 function stat(label,num,delta,kind=''){return `<article class="stat"><div class="label">${label}</div><div class="num">${num}</div><div class="delta ${kind}">${delta}</div></article>`}
-function dashboard(){return layout(`<div class="page"><div class="page-head"><div><h1>Good morning, Hazel</h1><p>Here is what is happening with your café today.</p></div><button class="btn" onclick="openEmployee()">+ Add Employee</button></div><section class="stat-grid">${stat('Total Employees','15','↑ 3 this month')}${stat('Present Today','12','80% attendance rate')}${stat('Late Employees','2','Needs attention','orange')}${stat('Payroll Status','Pending','3 awaiting approval','blue')}</section><section class="stat-grid">${stat('Payroll Period','Jul 16 - 31','Current period')}${stat('Payroll Expense','₱58,640','Projected total')}${stat('Pending Approval','3','Generate payroll first','orange')}${stat('Attendance Rate','92%','↑ 4% vs. last week')}</section><div class="two-col"><section class="panel"><div class="panel-title">Weekly attendance <span class="chip green">Live overview</span></div><div class="bar-chart">${[['Mon',72],['Tue',88],['Wed',61],['Thu',92],['Fri',76],['Sat',98],['Sun',54]].map(([d,h])=>`<div class="bar" style="height:${h}%"><span>${d}</span></div>`).join('')}</div></section><section class="panel"><div class="panel-title">Quick actions</div><div class="quick"><button onclick="openEmployee()">＋ Add employee</button><button onclick="toast('Payroll generation started')">₱ Generate payroll</button><button onclick="go('attendance')">◷ View attendance</button><button onclick="go('payroll')">▤ View reports</button></div></section></div><div class="two-col" style="margin-top:19px"><section class="panel"><div class="panel-title">Recent activities <button class="btn ghost">View all</button></div>${[['♙','Maria Santos was added','10 minutes ago'],['₱','Payroll for Jul 1 - 15 generated','1 hour ago'],['▤','Payslip downloaded by Juan Dela Cruz','2 hours ago'],['▦','Schedule updated for Kitchen Staff','Yesterday']].map(a=>`<div class="activity"><div class="activity-icon">${a[0]}</div><div>${a[1]}<small>${a[2]}</small></div></div>`).join('')}</section><section class="panel"><div class="panel-title">Payroll snapshot</div><p style="color:var(--muted);line-height:1.7">The current payroll period closes in <b style="color:var(--espresso)">4 days</b>. Review employee attendance before submitting for approval.</p><button class="btn full" onclick="go('approval')">Review payroll</button></section></div></div>`,'Dashboard')}
+function formatCurrency(value){return `₱${value.toLocaleString('en-PH',{minimumFractionDigits:0})}`}
+function payrollSummaryData(){const activeEmployees=employees.filter(e=>e.status==='Active').length;const todayRecords=attendanceRecords.filter(r=>r.date===attendanceDate);const presentCount=todayRecords.filter(r=>r.status==='present').length;const attendanceRate=activeEmployees?Math.round((presentCount/activeEmployees)*100):0;const periodRecords=payrollRecords.filter(r=>r.period===currentPayrollPeriod);const totalNetPay=periodRecords.reduce((sum,r)=>sum+r.netPay,0);const paidCount=periodRecords.filter(r=>r.paid).length;const totalCount=periodRecords.length;return{attendanceRate,presentCount,totalNetPay,paidCount,totalCount};}
+function dashboard(){const summary=payrollSummaryData();return layout(`<div class="page"><div class="page-head"><div><h1>Good morning, Hazel</h1><p>Here is what is happening with your café today.</p></div><button class="btn" onclick="openEmployee()">+ Add Employee</button></div><section class="stat-grid">${stat('Total Employees',employees.filter(e=>e.status==='Active').length,'↑ 3 this month')}${stat('Present Today',summary.presentCount,`${summary.attendanceRate}% attendance rate`)}${stat('Late Employees',attendanceRecords.filter(r=>r.date===attendanceDate&&r.status==='late').length,'Needs attention','orange')}${stat('Payroll Status','Pending','3 awaiting approval','blue')}</section><section class="stat-grid">${stat('Payroll Period',currentPayrollPeriod,'Current period')}${stat('Payroll Expense',formatCurrency(summary.totalNetPay),'Current period total')}${stat('Pending Approval',payrollRecords.filter(r=>r.period===currentPayrollPeriod&& !r.paid).length,'Waiting to pay','orange')}${stat('Attendance Rate',`${summary.attendanceRate}%`,`Today` )}</section><section class="payroll-summary-panel"><div class="payroll-summary-shell"><div class="attendance-ring" style="--ring-fill:${summary.attendanceRate * 3.6}deg"><div class="ring-center"><div class="ring-number">${summary.attendanceRate}%</div><div class="ring-text">Attendance Rate<br><span>Today</span></div></div></div><div class="summary-cards"><article class="summary-card"><div class="card-label">Net Pay</div><div class="card-value">${formatCurrency(summary.totalNetPay)}</div><div class="card-note">Current Period</div></article><article class="summary-card"><div class="card-label">Employees Paid</div><div class="card-value">${summary.paidCount} / ${summary.totalCount}</div><div class="card-note">Current Period</div></article></div></div></section><div class="two-col"><section class="panel"><div class="panel-title">Weekly attendance <span class="chip green">Live overview</span></div><div class="bar-chart">${[['Mon',72],['Tue',88],['Wed',61],['Thu',92],['Fri',76],['Sat',98],['Sun',54]].map(([d,h])=>`<div class="bar" style="height:${h}%"><span>${d}</span></div>`).join('')}</div></section><section class="panel"><div class="panel-title">Quick actions</div><div class="quick"><button onclick="openEmployee()">＋ Add employee</button><button onclick="toast('Payroll generation started')">₱ Generate payroll</button><button onclick="go('attendance')">◷ View attendance</button><button onclick="go('payroll')">▤ View reports</button></div></section></div><div class="two-col" style="margin-top:19px"><section class="panel"><div class="panel-title">Recent activities <button class="btn ghost">View all</button></div>${[['♙','Maria Santos was added','10 minutes ago'],['₱','Payroll for Jul 1 - 15 generated','1 hour ago'],['▤','Payslip downloaded by Juan Dela Cruz','2 hours ago'],['▦','Schedule updated for Kitchen Staff','Yesterday']].map(a=>`<div class="activity"><div class="activity-icon">${a[0]}</div><div>${a[1]}<small>${a[2]}</small></div></div>`).join('')}</section><section class="panel"><div class="panel-title">Payroll snapshot</div><p style="color:var(--muted);line-height:1.7">The current payroll period closes in <b style="color:var(--espresso)">4 days</b>. Review employee attendance before submitting for approval.</p><button class="btn full" onclick="go('approval')">Review payroll</button></section></div></div>`,'Dashboard')}
 function employeesPage(){let rows=employees.filter(e=>e.status!=='Archived');return layout(`<div class="page"><div class="page-head"><div><h1>Employee Management</h1><p>Manage employee information, work details, and identification records.</p></div><button class="btn" onclick="openEmployee()">+ Add Employee</button></div><section class="stat-grid">${stat('Total Employees',rows.length,'All registered employees')}${stat('Active Employees',rows.filter(e=>e.status==='Active').length,'Currently employed')}${stat('Inactive Employees',rows.filter(e=>e.status==='Inactive').length,'Archived or inactive','orange')}${stat('New This Month','3','↑ 20% vs. June','blue')}</section><div class="toolbar"><div class="search"><input oninput="filterEmployees(this.value)" placeholder="Search employee name or Employee ID..." /></div><select onchange="filterEmployees('',this.value)"><option value="">All Designations</option>${['Kitchen Staff','Service Staff','Cashier','Barista','Manager'].map(x=>`<option>${x}</option>`)}</select><select onchange="filterEmployees('', '',this.value)"><option value="">All Status</option><option>Active</option><option>Inactive</option></select><button class="btn secondary" onclick="toast('Employee list exported successfully')">Export</button></div><div class="table-wrap"><table><thead><tr><th>Employee ID</th><th>Employee</th><th>Designation</th><th>Hourly rate</th><th>Status</th><th>Date hired</th><th>QR</th><th>Actions</th></tr></thead><tbody id="employee-rows">${employeeRows(rows)}</tbody></table></div><p style="color:var(--muted);font-size:12px">Showing ${rows.length} of ${rows.length} employees · Rows per page: 10</p></div>`,'Employees')}
 function employeeRows(list){return list.map(e=>`<tr><td><b>${e.id}</b></td><td><div class="person"><i class="photo">${e.name.split(' ').map(x=>x[0]).join('')}</i>${e.name}</div></td><td>${e.role}</td><td>₱${e.rate.toFixed(2)}/hr</td><td><span class="chip ${e.status==='Active'?'green':'gray'}">${e.status}</span></td><td>${e.hired}</td><td><button class="icon-btn" onclick="qr('${e.id}')">▦</button></td><td><div class="actions"><button class="icon-btn" title="View" onclick="profile('${e.id}')">◉</button><button class="icon-btn" title="Edit" onclick="openEmployee('${e.id}')">✎</button><button class="icon-btn" title="ID Card" onclick="idCard('${e.id}')">▣</button><button class="icon-btn" title="Archive" onclick="archiveEmployee('${e.id}')">⌫</button></div></td></tr>`).join('')}
 function filterEmployees(q='',role='',status=''){q=q.toLowerCase();const data=employees.filter(e=>(!q||Object.values(e).join(' ').toLowerCase().includes(q))&&(!role||e.role===role)&&(!status||e.status===status));$('#employee-rows').innerHTML=employeeRows(data)}
@@ -65,59 +105,4 @@ function archiveEmployee(id){let e=employees.find(x=>x.id===id);modal(`<div clas
 function openSchedule(){modal(`<div class="modal-head"><div><h2>Assign Schedule</h2><p>Create a work schedule for an active employee.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><form onsubmit="event.preventDefault();closeModal();toast('Schedule assigned successfully');go('schedules')"><div class="form-grid"><div class="field"><label>EMPLOYEE *</label><select>${employees.filter(e=>e.status==='Active').map(e=>`<option>${e.name} (${e.id})</option>`)}</select></div><div class="field"><label>SCHEDULE TYPE *</label><select><option>Weekly</option><option>Monthly</option></select></div><div class="field"><label>SHIFT NAME *</label><input value="Morning Shift" required></div><div class="field"><label>EFFECTIVE DATE *</label><input type="date" value="2026-07-27" required></div><div class="field"><label>TIME IN *</label><input type="time" value="08:00" required></div><div class="field"><label>TIME OUT *</label><input type="time" value="17:00" required></div></div><div class="field"><label>WORKING DAYS *</label><div style="display:flex;gap:8px;flex-wrap:wrap">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<label style="font-weight:400"><input type="checkbox" ${i<6?'checked':''}> ${d}</label>`).join('')}</div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn">Assign Schedule</button></div></form>`)}
 function forgotPassword(){modal(`<div class="modal-head"><div><h2>Reset password</h2><p>We’ll send a password reset link to your email.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><form onsubmit="event.preventDefault();closeModal();toast('Password reset link has been sent')"><div class="field"><label>EMAIL ADDRESS</label><input type="email" placeholder="owner@cafe.com" required></div><div class="modal-actions"><button class="btn secondary" type="button" onclick="closeModal()">Cancel</button><button class="btn">Send reset link</button></div></form>`)}
 function showLogout(){modal(`<div class="modal-head"><div><h2>Log out?</h2><p>You will need to sign in again to access payroll information.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><div class="modal-actions"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn danger" onclick="closeModal();go('login');toast('You have been logged out')">Logout</button></div>`)}
-
-// --- Payroll summary helpers and attendance persistence ---
-function recordAttendanceData(id,type){
-  const today=new Date().toISOString().slice(0,10);
-  let rec=attendanceRecords.find(r=>r.employeeId===id&&r.date===today);
-  const now=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit',second:'2-digit'});
-  if(!rec){rec={employeeId:id,date:today,inTime:null,outTime:null};attendanceRecords.push(rec)}
-  if(type==='in'){rec.inTime=now}else{rec.outTime=now}
-  return rec
-}
-
-function getActiveEmployeeCount(){return employees.filter(e=>e.status==='Active').length}
-function getAttendanceRate(){const today=new Date().toISOString().slice(0,10);const present=attendanceRecords.filter(r=>r.date===today&&r.inTime).map(r=>r.employeeId);const unique=new Set(present);const total=getActiveEmployeeCount();return total?Math.round((unique.size/total)*100):0}
-function getCurrentPayrollPeriod(){return {start:'2026-07-16',end:'2026-07-31'}}
-function getNetPayForPeriod(period){return payrollRecords.filter(r=>r.periodStart===period.start&&r.periodEnd===period.end).reduce((s,r)=>s+r.netPay,0)}
-function getEmployeesPaidForPeriod(period){const relevant=payrollRecords.filter(r=>r.periodStart===period.start&&r.periodEnd===period.end);const paid=relevant.filter(r=>r.paid).length;const total=relevant.length;return {paid,total}}
-
-function renderPayrollSummaryMarkup(){
-  const percent=getAttendanceRate();
-  const period=getCurrentPayrollPeriod();
-  const net=getNetPayForPeriod(period);
-  const paidInfo=getEmployeesPaidForPeriod(period);
-  const circumference = Math.PI*2*48;
-  const filled = (percent/100)*circumference;
-  return `<div class="payroll-summary-inner"><div class="payroll-top"><div class="donut-wrap"><svg class="donut" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true"><g transform="translate(60,60)"><circle r="48" fill="none" stroke="#f2efe9" stroke-width="12"></circle><circle r="48" fill="none" stroke="var(--camel)" stroke-width="12" stroke-linecap="round" class="donut-ring" style="stroke-dasharray: ${filled} ${circumference};transform:rotate(-90deg);transform-origin:center"></circle></g></svg><div class="donut-center"><div class="donut-percent">${percent}%</div><div class="donut-label">Attendance Rate • Today</div></div></div><div class="payroll-cards"><div class="summary-card"><div class="card-label">Net Pay (Current Period)</div><div class="card-value">₱${net.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div><div class="summary-card"><div class="card-label">Employees Paid (Current Period)</div><div class="card-value">${paidInfo.paid} / ${paidInfo.total}</div></div></div></div>`
-}
-
-function updatePayrollSummary(){const el=document.querySelector('#payroll-summary');if(!el)return;el.innerHTML=renderPayrollSummaryMarkup()}
-
-// Override recordAttendance to persist data and update the payroll summary UI
-const _orig_recordAttendance = recordAttendance;
-function recordAttendance(id,type){
-  recordAttendanceData(id,type);
-  _orig_recordAttendance(id,type);
-  updatePayrollSummary();
-}
-
-function render(){
-  let v = active==='welcome'?welcome():active==='login'?login():active==='dashboard'?dashboard():active==='employees'?employeesPage():active==='schedules'?schedules():active==='attendance'?attendance():active==='employee-attendance'||active==='attendance-scanner'?employeeAttendancePage():placeholder(active);
-  $('#app').innerHTML = v;
-  // Inject payroll summary placeholder into dashboard after render
-  if(active==='dashboard'){
-    const page = document.querySelector('.page');
-    if(page){
-      const head = page.querySelector('.page-head');
-      if(head && !document.getElementById('payroll-summary')){
-        const sec = document.createElement('section');
-        sec.id = 'payroll-summary';
-        sec.className = 'panel payroll-summary';
-        head.insertAdjacentElement('afterend', sec);
-      }
-      updatePayrollSummary();
-    }
-  }
-}
-render();
+function render(){let v=active==='welcome'?welcome():active==='login'?login():active==='dashboard'?dashboard():active==='employees'?employeesPage():active==='schedules'?schedules():active==='attendance'?attendance():active==='employee-attendance'||active==='attendance-scanner'?employeeAttendancePage():placeholder(active);$('#app').innerHTML=v}render();
