@@ -7,6 +7,14 @@ const employees = [
   {id:'EMP-005',qrCode:'QR-EMP-005',name:'Leo Cruz',role:'Manager',rate:110,status:'Inactive',hired:'Jun 01, 2026'}
 ];
 let active='welcome', selected=null, cameraStream=null, activeAttendanceEmployee=null;
+// Attendance records and payroll records (dynamic data models)
+const attendanceRecords = [];
+const payrollRecords = [
+  {employeeId:'EMP-001',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:5200.00,paid:true},
+  {employeeId:'EMP-002',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:4120.50,paid:true},
+  {employeeId:'EMP-003',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:3780.75,paid:false},
+  {employeeId:'EMP-004',periodStart:'2026-07-16',periodEnd:'2026-07-31',netPay:4100.00,paid:false}
+];
 function toggleSidebar(){
   const open = document.body.classList.toggle('sidebar-open');
   const btn = document.querySelector('.hamburger');
@@ -57,4 +65,59 @@ function archiveEmployee(id){let e=employees.find(x=>x.id===id);modal(`<div clas
 function openSchedule(){modal(`<div class="modal-head"><div><h2>Assign Schedule</h2><p>Create a work schedule for an active employee.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><form onsubmit="event.preventDefault();closeModal();toast('Schedule assigned successfully');go('schedules')"><div class="form-grid"><div class="field"><label>EMPLOYEE *</label><select>${employees.filter(e=>e.status==='Active').map(e=>`<option>${e.name} (${e.id})</option>`)}</select></div><div class="field"><label>SCHEDULE TYPE *</label><select><option>Weekly</option><option>Monthly</option></select></div><div class="field"><label>SHIFT NAME *</label><input value="Morning Shift" required></div><div class="field"><label>EFFECTIVE DATE *</label><input type="date" value="2026-07-27" required></div><div class="field"><label>TIME IN *</label><input type="time" value="08:00" required></div><div class="field"><label>TIME OUT *</label><input type="time" value="17:00" required></div></div><div class="field"><label>WORKING DAYS *</label><div style="display:flex;gap:8px;flex-wrap:wrap">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<label style="font-weight:400"><input type="checkbox" ${i<6?'checked':''}> ${d}</label>`).join('')}</div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn">Assign Schedule</button></div></form>`)}
 function forgotPassword(){modal(`<div class="modal-head"><div><h2>Reset password</h2><p>We’ll send a password reset link to your email.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><form onsubmit="event.preventDefault();closeModal();toast('Password reset link has been sent')"><div class="field"><label>EMAIL ADDRESS</label><input type="email" placeholder="owner@cafe.com" required></div><div class="modal-actions"><button class="btn secondary" type="button" onclick="closeModal()">Cancel</button><button class="btn">Send reset link</button></div></form>`)}
 function showLogout(){modal(`<div class="modal-head"><div><h2>Log out?</h2><p>You will need to sign in again to access payroll information.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><div class="modal-actions"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn danger" onclick="closeModal();go('login');toast('You have been logged out')">Logout</button></div>`)}
-function render(){let v=active==='welcome'?welcome():active==='login'?login():active==='dashboard'?dashboard():active==='employees'?employeesPage():active==='schedules'?schedules():active==='attendance'?attendance():active==='employee-attendance'||active==='attendance-scanner'?employeeAttendancePage():placeholder(active);$('#app').innerHTML=v}render();
+
+// --- Payroll summary helpers and attendance persistence ---
+function recordAttendanceData(id,type){
+  const today=new Date().toISOString().slice(0,10);
+  let rec=attendanceRecords.find(r=>r.employeeId===id&&r.date===today);
+  const now=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit',second:'2-digit'});
+  if(!rec){rec={employeeId:id,date:today,inTime:null,outTime:null};attendanceRecords.push(rec)}
+  if(type==='in'){rec.inTime=now}else{rec.outTime=now}
+  return rec
+}
+
+function getActiveEmployeeCount(){return employees.filter(e=>e.status==='Active').length}
+function getAttendanceRate(){const today=new Date().toISOString().slice(0,10);const present=attendanceRecords.filter(r=>r.date===today&&r.inTime).map(r=>r.employeeId);const unique=new Set(present);const total=getActiveEmployeeCount();return total?Math.round((unique.size/total)*100):0}
+function getCurrentPayrollPeriod(){return {start:'2026-07-16',end:'2026-07-31'}}
+function getNetPayForPeriod(period){return payrollRecords.filter(r=>r.periodStart===period.start&&r.periodEnd===period.end).reduce((s,r)=>s+r.netPay,0)}
+function getEmployeesPaidForPeriod(period){const relevant=payrollRecords.filter(r=>r.periodStart===period.start&&r.periodEnd===period.end);const paid=relevant.filter(r=>r.paid).length;const total=relevant.length;return {paid,total}}
+
+function renderPayrollSummaryMarkup(){
+  const percent=getAttendanceRate();
+  const period=getCurrentPayrollPeriod();
+  const net=getNetPayForPeriod(period);
+  const paidInfo=getEmployeesPaidForPeriod(period);
+  const circumference = Math.PI*2*48;
+  const filled = (percent/100)*circumference;
+  return `<div class="payroll-summary-inner"><div class="payroll-top"><div class="donut-wrap"><svg class="donut" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true"><g transform="translate(60,60)"><circle r="48" fill="none" stroke="#f2efe9" stroke-width="12"></circle><circle r="48" fill="none" stroke="var(--camel)" stroke-width="12" stroke-linecap="round" class="donut-ring" style="stroke-dasharray: ${filled} ${circumference};transform:rotate(-90deg);transform-origin:center"></circle></g></svg><div class="donut-center"><div class="donut-percent">${percent}%</div><div class="donut-label">Attendance Rate • Today</div></div></div><div class="payroll-cards"><div class="summary-card"><div class="card-label">Net Pay (Current Period)</div><div class="card-value">₱${net.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div><div class="summary-card"><div class="card-label">Employees Paid (Current Period)</div><div class="card-value">${paidInfo.paid} / ${paidInfo.total}</div></div></div></div>`
+}
+
+function updatePayrollSummary(){const el=document.querySelector('#payroll-summary');if(!el)return;el.innerHTML=renderPayrollSummaryMarkup()}
+
+// Override recordAttendance to persist data and update the payroll summary UI
+const _orig_recordAttendance = recordAttendance;
+function recordAttendance(id,type){
+  recordAttendanceData(id,type);
+  _orig_recordAttendance(id,type);
+  updatePayrollSummary();
+}
+
+function render(){
+  let v = active==='welcome'?welcome():active==='login'?login():active==='dashboard'?dashboard():active==='employees'?employeesPage():active==='schedules'?schedules():active==='attendance'?attendance():active==='employee-attendance'||active==='attendance-scanner'?employeeAttendancePage():placeholder(active);
+  $('#app').innerHTML = v;
+  // Inject payroll summary placeholder into dashboard after render
+  if(active==='dashboard'){
+    const page = document.querySelector('.page');
+    if(page){
+      const head = page.querySelector('.page-head');
+      if(head && !document.getElementById('payroll-summary')){
+        const sec = document.createElement('section');
+        sec.id = 'payroll-summary';
+        sec.className = 'panel payroll-summary';
+        head.insertAdjacentElement('afterend', sec);
+      }
+      updatePayrollSummary();
+    }
+  }
+}
+render();
