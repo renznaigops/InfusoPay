@@ -1,5 +1,5 @@
 const $ = (s) => document.querySelector(s);
-const employees = [
+const employees = [ 
   {id:'EMP-001',qrCode:'QR-EMP-001',name:'Juan Dela Cruz',role:'Kitchen Staff',rate:80,status:'Active',hired:'Jul 10, 2026'},
   {id:'EMP-002',qrCode:'QR-EMP-002',name:'Maria Santos',role:'Barista',rate:85,status:'Active',hired:'Jul 12, 2026'},
   {id:'EMP-003',qrCode:'QR-EMP-003',name:'Carlo Reyes',role:'Cashier',rate:82,status:'Active',hired:'Jul 14, 2026'},
