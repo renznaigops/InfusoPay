@@ -71,6 +71,12 @@ const payrollHistory = [
   {period:'Jun 16 - 30',employees:14,grossPayroll:53120,totalDeductions:2480,netPayroll:50640,status:'Paid',processed:'Jul 01, 2026'},
   {period:'Jul 1 - 15',employees:15,grossPayroll:54550,totalDeductions:2565,netPayroll:51985,status:'Paid',processed:'Jul 16, 2026'}
 ];
+// Payroll batches track computed/approval/locked status per payroll period
+const payrollBatches = [
+  {period: currentPayrollPeriod, status: 'Ready for Approval', locked: false, computedAt: 'Jul 31, 2026'}
+];
+// Payslip archive stores generated payslips after approval
+const payslipArchive = [];
 const reportFilters = {employee:'',employeeId:'',period:'',month:'',year:'',designation:'',status:''};
 let active='welcome', selected=null, cameraStream=null, activeAttendanceEmployee=null;
 function toggleSidebar(){
@@ -103,6 +109,85 @@ function resetReportFilters(){reportFilters.employee='';reportFilters.employeeId
 function grossPay(record){const emp=employeeById(record.employeeId);const rate=emp.rate||0;return Math.round((record.regularHours*rate + record.overtimeHours*rate*1.25)*100)/100}
 function netPay(record){return Math.round((grossPay(record)-payrollDeductionsTotal(record))*100)/100}
 function payrollPeriods(){return [...new Set(payrollRecords.map(r=>r.period))]}
+
+function isPayrollLocked(period){const batch=payrollBatches.find(b=>b.period===period);return batch?batch.locked:false}
+
+// --- Payroll Approval UI & actions ---
+function payrollApproval(){
+  const periods = payrollPeriods();
+  const batchList = payrollBatches.map(b=>`<option value="${b.period}">${b.period} · ${b.status}</option>`).join('');
+  const rows = payrollRecords.filter(r=>r.period===currentPayrollPeriod).map(r=>{
+    const emp=employeeById(r.employeeId);
+    return `<tr><td>${r.employeeId}</td><td>${emp.name}</td><td>${emp.role}</td><td>${r.regularHours}</td><td>${(r.regularHours*emp.rate).toFixed(2)}</td><td>${(r.overtimeHours*emp.rate*1.25).toFixed(2)}</td><td>${grossPay(r).toFixed(2)}</td><td>${payrollDeductionsTotal(r).toFixed(2)}</td><td>${netPay(r).toFixed(2)}</td><td><span class="chip ${isPayrollLocked(r.period)?'gray':'orange'}">${payrollBatches.find(b=>b.period===r.period)?.status||'Computed'}</span></td><td><button class="btn ghost" onclick="viewPayrollDetails('${r.employeeId}','${r.period}')">View details</button></td></tr>`
+  }).join('');
+  return layout(`<div class="page"><div class="page-head"><div><h1>Payroll Approval</h1><p>Review computed payrolls and approve payroll batches for finalization.</p></div><button class="btn" onclick="computePayrollForCurrentPeriod()">Recompute Payroll</button></div><section class="panel"><div class="panel-title">Payroll Period · ${currentPayrollPeriod}</div><div class="table-wrap"><table><thead><tr><th>Payroll Period</th><th>Employee ID</th><th>Employee Name</th><th>Total Hours Worked</th><th>Regular Pay</th><th>Overtime Pay</th><th>Gross Pay</th><th>Total Deductions</th><th>Net Pay</th><th>Payroll Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin-top:16px;display:flex;gap:10px;align-items:center"><button class="btn" onclick="confirmApprovePayroll('${currentPayrollPeriod}')" ${isPayrollLocked(currentPayrollPeriod)?'disabled':''}>Approve Payroll</button><button class="btn secondary" onclick="go('payslips')">View Payslip Archive</button></div></section></div>`,'Payroll Approval')}
+
+function viewPayrollDetails(employeeId,period){
+  const rec = payrollFor(employeeId,period);
+  const emp = employeeById(employeeId);
+  const rules = deductionHistoryFor(employeeId,period);
+  const deductionsHtml = rules.map(d=>`<div style="display:flex;justify-content:space-between"><div>${d.type}</div><div>₱${(d.amount||0).toFixed(2)}</div></div>`).join('');
+  modal(`<div class="modal-head"><div><h2>Payroll details</h2><p>Payroll calculation for ${emp.name} · ${period}</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><div style="padding:8px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><b>Employee</b><div>${emp.name}</div><div style="color:var(--muted)">${emp.id} · ${emp.role}</div></div><div><b>Payroll Period</b><div>${period}</div><div style="color:var(--muted)">Processed: ${rec.processed}</div></div></div><hr style="margin:12px 0"><div><b>Earnings</b><div style="display:flex;justify-content:space-between"><div>Regular Hours (${rec.regularHours})</div><div>₱${(rec.regularHours*emp.rate).toFixed(2)}</div></div><div style="display:flex;justify-content:space-between"><div>Overtime Hours (${rec.overtimeHours})</div><div>₱${(rec.overtimeHours*emp.rate*1.25).toFixed(2)}</div></div><div style="display:flex;justify-content:space-between;margin-top:8px"><div>Gross Pay</div><div>₱${grossPay(rec).toFixed(2)}</div></div></div><div style="margin-top:12px"><b>Deductions</b>${deductionsHtml}<div style="display:flex;justify-content:space-between;margin-top:8px"><div>Total Deductions</div><div>₱${payrollDeductionsTotal(rec).toFixed(2)}</div></div></div><div style="margin-top:12px;display:flex;justify-content:space-between"><div><b>Net Pay</b></div><div style="font-size:18px;font-weight:700">₱${netPay(rec).toFixed(2)}</div></div><div class="modal-actions" style="margin-top:14px"><button class="btn secondary" onclick="closeModal()">Close</button><button class="btn" onclick="confirmApprovePayroll('${period}')" ${isPayrollLocked(period)?'disabled':''}>Approve Payroll</button></div></div>`)
+}
+
+function confirmApprovePayroll(period){
+  modal(`<div class="modal-head"><div><h2>Approve payroll for ${period}?</h2><p>Are you sure you want to approve this payroll? Once approved, the payroll will be locked and cannot be edited.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><div class="modal-actions"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn" onclick="approvePayroll('${period}')">Yes, approve payroll</button></div>`)
+}
+
+function approvePayroll(period){
+  closeModal();
+  const batch = payrollBatches.find(b=>b.period===period) || (payrollBatches.push({period,status:'Approved',locked:true,computedAt:new Date().toLocaleDateString()}),payrollBatches.find(b=>b.period===period));
+  batch.status='Approved'; batch.locked=true; batch.approvedAt=new Date().toLocaleString();
+  // mark payrollRecords as approved/locked
+  payrollRecords.filter(r=>r.period===period).forEach(r=>r.approved=true);
+  // generate payslips automatically
+  generatePayslipsForPeriod(period);
+  toast(`Payroll for ${period} approved and locked`);
+  render();
+}
+
+function generatePayslipsForPeriod(period){
+  const records = payrollRecords.filter(r=>r.period===period);
+  records.forEach(r=>{
+    const emp = employeeById(r.employeeId);
+    const payslipId = `PS-${period.replace(/\s|\-/g,'')}-${r.employeeId}`;
+    const payslip = {
+      id: payslipId,
+      employeeId: r.employeeId,
+      employeeName: emp.name,
+      designation: emp.role,
+      period: period,
+      payDate: r.processed,
+      regularHours: r.regularHours,
+      regularPay: Math.round((r.regularHours*emp.rate)*100)/100,
+      overtimeHours: r.overtimeHours,
+      overtimePay: Math.round((r.overtimeHours*emp.rate*1.25)*100)/100,
+      grossPay: grossPay(r),
+      deductions: deductionHistoryFor(r.employeeId,period),
+      totalDeductions: payrollDeductionsTotal(r),
+      netPay: netPay(r),
+      status: 'Generated',
+      generatedAt: new Date().toLocaleString()
+    };
+    payslipArchive.push(payslip);
+  });
+}
+
+// --- Payslip Archive & viewer ---
+const payslipFilters = {employee:'',period:'',month:'',year:''};
+function updatePayslipFilter(field,value){payslipFilters[field]=value;render();}
+
+function payslipsPage(){
+  const rows = payslipArchive.filter(p=>(!payslipFilters.employee||p.employeeName.toLowerCase().includes(payslipFilters.employee.toLowerCase()))&&(!payslipFilters.period||p.period===payslipFilters.period)&&(!payslipFilters.month||p.payDate.includes(payslipFilters.month))&&(!payslipFilters.year||p.payDate.includes(payslipFilters.year))).map(p=>`<tr><td>${p.employeeId}</td><td>${p.employeeName}</td><td>${p.designation}</td><td>${p.period}</td><td>${p.payDate}</td><td>₱${p.netPay.toFixed(2)}</td><td>${p.status}</td><td><button class="btn ghost" onclick="viewPayslip('${p.id}')">View</button><button class="btn ghost" onclick="downloadPayslipPDF('${p.id}')">Download PDF</button><button class="btn ghost" onclick="printPayslip('${p.id}')">Print</button></td></tr>`).join('');
+  return layout(`<div class="page"><div class="page-head"><div><h1>Payslip Archive</h1><p>All payslips generated after payroll approval are stored here.</p></div><button class="btn" onclick="renderPayslipSample()">Refresh</button></div><section class="toolbar" style="gap:12px"><div class="field" style="flex:1"><label>Employee</label><input placeholder="Search employee name" value="${payslipFilters.employee}" oninput="updatePayslipFilter('employee',this.value)"/></div><div class="field"><label>Period</label><select onchange="updatePayslipFilter('period',this.value)"><option value="">All periods</option>${[...new Set(payslipArchive.map(p=>p.period))].map(p=>`<option value="${p}">${p}</option>`).join('')}</select></div><div class="field"><label>Month</label><select onchange="updatePayslipFilter('month',this.value)"><option value="">All months</option>${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div><div class="field"><label>Year</label><select onchange="updatePayslipFilter('year',this.value)"><option value="">All years</option>${[...new Set(payslipArchive.map(p=>new Date(p.payDate).getFullYear()))].map(y=>`<option value="${y}">${y}</option>`).join('')}</select></div></section><section class="panel"><div class="table-wrap"><table><thead><tr><th>Employee ID</th><th>Employee Name</th><th>Designation</th><th>Period</th><th>Pay Date</th><th>Net Pay</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div></section></div>`,'Payslips')}
+
+function viewPayslip(payslipId){const p = payslipArchive.find(x=>x.id===payslipId);if(!p){toast('Payslip not found','error');return}const deductionsHtml = p.deductions.map(d=>`<div style="display:flex;justify-content:space-between"><div>${d.type}</div><div>₱${(d.amount||0).toFixed(2)}</div></div>`).join('');modal(`<div class="modal-head"><div><h2>InfusoPay · Employee Payslip</h2><p>${p.employeeName} · ${p.employeeId}</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><div style="padding:12px"><div style="display:flex;justify-content:space-between"><div><b>${p.employeeName}</b><div style="color:var(--muted)">${p.employeeId} · ${p.designation}</div></div><div><b>Payroll Period</b><div>${p.period}</div><b>Pay Date</b><div>${p.payDate}</div></div></div><hr><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><b>Earnings</b>${`<div style=\"display:flex;justify-content:space-between\"><div>Regular Hours (${p.regularHours})</div><div>₱${p.regularPay.toFixed(2)}</div></div><div style=\"display:flex;justify-content:space-between\"><div>Overtime Hours (${p.overtimeHours})</div><div>₱${p.overtimePay.toFixed(2)}</div></div><div style=\"display:flex;justify-content:space-between;margin-top:8px\"><div>Gross Pay</div><div>₱${p.grossPay.toFixed(2)}</div></div>`}</div><div><b>Deductions</b>${deductionsHtml}<div style="display:flex;justify-content:space-between;margin-top:8px"><div>Total Deductions</div><div>₱${p.totalDeductions.toFixed(2)}</div></div></div></div><hr><div style="display:flex;justify-content:space-between;align-items:center"><div><b>Net Pay</b></div><div style="font-size:20px;font-weight:800">₱${p.netPay.toFixed(2)}</div></div><div class="modal-actions" style="margin-top:12px"><button class="btn secondary" onclick="closeModal()">Close</button><button class="btn" onclick="printPayslip('${payslipId}')">Print Payslip</button></div></div>`)}
+
+function downloadPayslipPDF(payslipId){const p=payslipArchive.find(x=>x.id===payslipId);if(!p){toast('Payslip not found','error');return}const html = renderPayslipHtml(p);const w=window.open('about:blank');w.document.write(html);w.document.close();try{w.focus();w.print();}catch(e){toast('Unable to open print dialog','error')} }
+
+function printPayslip(payslipId){const p=payslipArchive.find(x=>x.id===payslipId);if(!p){toast('Payslip not found','error');return}const html=renderPayslipHtml(p);const w=window.open('about:blank');w.document.write(html);w.document.close();w.focus();}
+
+function renderPayslipHtml(p){const deductionsHtml = p.deductions.map(d=>`<div style="display:flex;justify-content:space-between"><div>${d.type}</div><div>₱${(d.amount||0).toFixed(2)}</div></div>`).join('');return `<!doctype html><html><head><meta charset="utf-8"><title>Payslip ${p.id}</title><style>body{font-family:Inter,system-ui,sans-serif;padding:24px;color:#4a342a}h1{font-size:18px}hr{border:none;border-top:1px solid #eee;margin:12px 0}</style></head><body><h1>InfusoPay · Employee Payslip</h1><div style="display:flex;justify-content:space-between"><div><b>${p.employeeName}</b><div style="color:#816f66">${p.employeeId} · ${p.designation}</div></div><div><b>Payroll Period</b><div>${p.period}</div><b>Pay Date</b><div>${p.payDate}</div></div></div><hr><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><b>Earnings</b><div style="display:flex;justify-content:space-between"><div>Regular Hours (${p.regularHours})</div><div>₱${p.regularPay.toFixed(2)}</div></div><div style="display:flex;justify-content:space-between"><div>Overtime Hours (${p.overtimeHours})</div><div>₱${p.overtimePay.toFixed(2)}</div></div><div style="display:flex;justify-content:space-between;margin-top:8px"><div>Gross Pay</div><div>₱${p.grossPay.toFixed(2)}</div></div></div><div><b>Deductions</b>${deductionsHtml}<div style="display:flex;justify-content:space-between;margin-top:8px"><div>Total Deductions</div><div>₱${p.totalDeductions.toFixed(2)}</div></div></div></div><hr><div style="display:flex;justify-content:space-between;align-items:center"><div><b>Net Pay</b></div><div style="font-size:22px;font-weight:800">₱${p.netPay.toFixed(2)}</div></div><script>window.print()</script></body></html>`}
 function payrollFilteredRecords(){return payrollRecords.map(r=>({
   ...r,
   id:r.employeeId,
@@ -158,4 +243,36 @@ function archiveEmployee(id){let e=employees.find(x=>x.id===id);modal(`<div clas
 function openSchedule(){modal(`<div class="modal-head"><div><h2>Assign Schedule</h2><p>Create a work schedule for an active employee.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><form onsubmit="event.preventDefault();closeModal();toast('Schedule assigned successfully');go('schedules')"><div class="form-grid"><div class="field"><label>EMPLOYEE *</label><select>${employees.filter(e=>e.status==='Active').map(e=>`<option>${e.name} (${e.id})</option>`)}</select></div><div class="field"><label>SCHEDULE TYPE *</label><select><option>Weekly</option><option>Monthly</option></select></div><div class="field"><label>SHIFT NAME *</label><input value="Morning Shift" required></div><div class="field"><label>EFFECTIVE DATE *</label><input type="date" value="2026-07-27" required></div><div class="field"><label>TIME IN *</label><input type="time" value="08:00" required></div><div class="field"><label>TIME OUT *</label><input type="time" value="17:00" required></div></div><div class="field"><label>WORKING DAYS *</label><div style="display:flex;gap:8px;flex-wrap:wrap">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<label style="font-weight:400"><input type="checkbox" ${i<6?'checked':''}> ${d}</label>`).join('')}</div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn">Assign Schedule</button></div></form>`)}
 function forgotPassword(){modal(`<div class="modal-head"><div><h2>Reset password</h2><p>We’ll send a password reset link to your email.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><form onsubmit="event.preventDefault();closeModal();toast('Password reset link has been sent')"><div class="field"><label>EMAIL ADDRESS</label><input type="email" placeholder="owner@cafe.com" required></div><div class="modal-actions"><button class="btn secondary" type="button" onclick="closeModal()">Cancel</button><button class="btn">Send reset link</button></div></form>`)}
 function showLogout(){modal(`<div class="modal-head"><div><h2>Log out?</h2><p>You will need to sign in again to access payroll information.</p></div><button class="icon-btn" onclick="closeModal()">×</button></div><div class="modal-actions"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn danger" onclick="closeModal();go('login');toast('You have been logged out')">Logout</button></div>`)}
-function render(){let v=active==='welcome'?welcome():active==='login'?login():active==='dashboard'?dashboard():active==='employees'?employeesPage():active==='schedules'?schedules():active==='payroll'?payrollReports():active==='deductions'?deductionRulesPage():active==='attendance'?attendance():active==='employee-attendance'||active==='attendance-scanner'?employeeAttendancePage():placeholder(active);$('#app').innerHTML=v}render();
+
+// include new pages in render mapping
+function render(){
+  let v = active==='welcome'?welcome()
+    : active==='login'?login()
+    : active==='dashboard'?dashboard()
+    : active==='employees'?employeesPage()
+    : active==='schedules'?schedules()
+    : active==='payroll'?payrollReports()
+    : active==='deductions'?deductionRulesPage()
+    : active==='attendance'?attendance()
+    : active==='employee-attendance'||active==='attendance-scanner'?employeeAttendancePage()
+    : active==='approval'?payrollApproval()
+    : active==='payslips'?payslipsPage()
+    : placeholder(active);
+  $('#app').innerHTML = v;
+}
+render();
+
+function computePayrollForCurrentPeriod(){
+  // recompute deductions and set batch status to Ready for Approval
+  const period = currentPayrollPeriod;
+  const batch = payrollBatches.find(b=>b.period===period) || (payrollBatches.push({period,status:'Ready for Approval',locked:false,computedAt:new Date().toLocaleDateString()}),payrollBatches.find(b=>b.period===period));
+  batch.status='Ready for Approval'; batch.locked=false; batch.computedAt=new Date().toLocaleString();
+  // (Prototype) recalc manual totals and net by running existing helpers — no persistent DB involved
+  payrollRecords.filter(r=>r.period===period).forEach(r=>{ // ensure approved flag removed on recompute
+    delete r.approved;
+  });
+  toast('Payroll recomputed and marked Ready for Approval');
+  render();
+}
+
+function renderPayslipSample(){render();toast('Payslip archive refreshed')}
